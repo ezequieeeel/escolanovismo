@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentSlides = [];
   let currentTopic = '';
 
-  // Slides por tema
+  // SLIDERS: pon aquí tu contenido real
   const SLIDERS = {
     origen: [
       {
@@ -199,19 +199,26 @@ document.addEventListener('DOMContentLoaded', () => {
     ]
   };
 
+  // Mostrar/ocultar burbujas
   mainBubble.addEventListener('click', () => {
-    bubbleGroup.classList.toggle('open');
-    if (bubbleGroup.classList.contains('open')) {
+    const isOpen = bubbleGroup.classList.toggle('open');
+    if (isOpen) {
       introText.classList.add('hide');
       bubblesArea.classList.add('grow');
+      setTimeout(() => {
+        bubbles.forEach(b => b.classList.add('visible'));
+      }, 100);
     } else {
       introText.classList.remove('hide');
       bubblesArea.classList.remove('grow');
+      bubbles.forEach(b => b.classList.remove('visible'));
     }
   });
 
+  // Abrir slider de cada burbuja
   bubbles.forEach((bubble) => {
-    bubble.addEventListener('click', () => {
+    bubble.addEventListener('click', (e) => {
+      e.stopPropagation();
       const topic = bubble.getAttribute('data-topic');
       currentTopic = topic;
       loadSlides(topic);
@@ -225,9 +232,51 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       modal.hidden = false;
       setTimeout(() => modal.classList.add('open'), 10);
+      document.body.style.overflow = 'hidden';
     });
   });
 
+  // Cerrar slider y volver a burbujas (mejorado: burbujas quedan abiertas)
+  function closeModal() {
+    modal.classList.remove('open');
+    setTimeout(() => { modal.hidden = true; }, 400);
+    document.body.style.overflow = '';
+    // Asegura que las burbujas sigan abiertas y visibles
+    bubbleGroup.classList.add('open');
+    introText.classList.add('hide');
+    bubblesArea.classList.add('grow');
+    setTimeout(() => {
+      bubbles.forEach(b => b.classList.add('visible'));
+    }, 100);
+    // Opcional: devuelve el foco a la burbuja principal
+    mainBubble.focus();
+  }
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  // Navegación de slides
+  function showSlide(idx) {
+    const slides = slidesContainer.querySelectorAll('.slide');
+    slides.forEach((slide, i) => {
+      slide.classList.toggle('active', i === idx);
+    });
+    current = idx;
+    updateIndicators();
+  }
+  prevBtn.addEventListener('click', () => {
+    const slides = slidesContainer.querySelectorAll('.slide');
+    if (!slides.length) return;
+    showSlide((current - 1 + slides.length) % slides.length);
+  });
+  nextBtn.addEventListener('click', () => {
+    const slides = slidesContainer.querySelectorAll('.slide');
+    if (!slides.length) return;
+    showSlide((current + 1) % slides.length);
+  });
+
+  // Cargar slides
   function loadSlides(topic) {
     slidesContainer.innerHTML = '';
     currentSlides = SLIDERS[topic] || [];
@@ -241,43 +290,22 @@ document.addEventListener('DOMContentLoaded', () => {
     updateIndicators();
   }
 
-  function showSlide(idx) {
-    const slides = slidesContainer.querySelectorAll('.slide');
-    slides.forEach((slide, i) => {
-      slide.classList.toggle('active', i === idx);
-    });
-    current = idx;
-    updateIndicators();
-  }
-
-  prevBtn.addEventListener('click', () => {
-    const slides = slidesContainer.querySelectorAll('.slide');
-    if (!slides.length) return;
-    showSlide((current - 1 + slides.length) % slides.length);
-  });
-  nextBtn.addEventListener('click', () => {
-    const slides = slidesContainer.querySelectorAll('.slide');
-    if (!slides.length) return;
-    showSlide((current + 1) % slides.length);
-  });
-  closeBtn.addEventListener('click', () => {
-    modal.classList.remove('open');
-    setTimeout(() => { modal.hidden = true; }, 400);
-  });
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      closeBtn.click();
-    }
-  });
-
+  // Indicadores
   function updateIndicators() {
     if (!indicators) return;
     indicators.innerHTML = '';
     for (let i = 0; i < currentSlides.length; i++) {
       const dot = document.createElement('span');
       dot.className = 'slider-indicator-dot' + (i === current ? ' active' : '');
+      dot.addEventListener('click', () => showSlide(i));
       indicators.appendChild(dot);
     }
   }
+
+  // Permitir volver a las burbujas desde cualquier slider
+  document.addEventListener('keydown', (e) => {
+    if (!modal.hidden && (e.key === "Escape" || e.key === "Backspace")) {
+      closeModal();
+    }
+  });
 });

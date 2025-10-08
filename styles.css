@@ -10,6 +10,7 @@
 }
 
 html, body {
+  min-height: 100dvh;
   height: 100%;
   margin: 0;
   padding: 0;
@@ -18,8 +19,8 @@ html, body {
     radial-gradient(ellipse at 50% 100%, #0006 0%, #0000 70%);
   font-family: 'Segoe UI', 'Georgia', serif;
   color: var(--white);
-  min-height: 100vh;
   box-shadow: 0 0 0 100vw #0003 inset;
+  overflow-x: hidden;
 }
 
 .container {
